@@ -19,14 +19,12 @@ import { IMessage } from '../@types/message'
 
 import io from 'socket.io-client'
 
-
 export default function Room() {
   const { userName, userId } = useContext(UserContext)
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<IMessage[]>([])
   const [file, setFile] = useState<File>({} as File)
   const { audioFile, isRecording, resetAudioFile } = useContext(AudioRecContext)
-
   const messagesEndRef = useRef<null | HTMLDivElement>(null)
   const socket = io('https://app-chat.herokuapp.com')
 

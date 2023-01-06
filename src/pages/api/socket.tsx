@@ -6,17 +6,12 @@ export default function SocketHandler(req, res) {
     res.end()
     return
   }
-
- 
   const io = new Server(res.socket.server)
   res.socket.server.io = io
-
   const onConnection = (socket) => {
     messageHandler(io, socket)
   }
-
   io.on('connection', onConnection)
-
   console.log('Setting up socket')
   res.end()
 }
