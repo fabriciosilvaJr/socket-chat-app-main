@@ -17,8 +17,8 @@ import { ChatBubble } from '@components/ChatBubble'
 
 import { IMessage } from '../@types/message'
 
-import io, { Socket } from 'socket.io-client'
-let socket: Socket
+import io from 'socket.io-client'
+
 
 export default function Room() {
   const { userName, userId } = useContext(UserContext)
@@ -28,20 +28,16 @@ export default function Room() {
   const { audioFile, isRecording, resetAudioFile } = useContext(AudioRecContext)
 
   const messagesEndRef = useRef<null | HTMLDivElement>(null)
-
-  async function socketInitializer() {
-    await fetch('/api/socket')
-
-    socket = io()
-
-    socket.on('newIncomingMessage', (msg: IMessage) => {
-      setMessages((currentMsg) => [...currentMsg, msg])
-    })
-  }
+  const socket = io('https://app-chat.herokuapp.com')
 
   useEffect(() => {
-    socketInitializer()
-  }, [])
+    socket.on('chat.message', (msg: IMessage) => {
+      console.log(msg)
+      setMessages((currentMsg) => [...currentMsg, msg])
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => socket.off('chat.message')
+  }, [socket])
 
   async function sendMessage() {
     const sendAt = new Date()
@@ -56,7 +52,7 @@ export default function Room() {
         sendAt,
       } as IMessage
 
-      socket.emit('createdMessage', messageObject)
+      socket.emit('chat.message', messageObject)
       setMessages((currentMsg) => [...currentMsg, messageObject])
       resetAudioFile()
       return
@@ -88,7 +84,7 @@ export default function Room() {
     } as IMessage
 
     setMessage('')
-    socket.emit('createdMessage', messageObject)
+    socket.emit('chat.message', messageObject)
     setMessages((currentMsg) => [...currentMsg, messageObject])
   }
 
