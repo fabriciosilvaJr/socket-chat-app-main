@@ -17,8 +17,9 @@ import { ChatBubble } from '@components/ChatBubble'
 
 import { IMessage } from '../@types/message'
 
-import io from 'socket.io-client'
+import io, { Socket } from 'socket.io-client'
 
+let socket: Socket
 export default function Room() {
   const { userName, userId } = useContext(UserContext)
   const [message, setMessage] = useState('')
@@ -26,7 +27,7 @@ export default function Room() {
   const [file, setFile] = useState<File>({} as File)
   const { audioFile, isRecording, resetAudioFile } = useContext(AudioRecContext)
   const messagesEndRef = useRef<null | HTMLDivElement>(null)
-  const socket = io('https://app-chat.herokuapp.com')
+  /* const socket = io('http://localhost:8080')
 
   useEffect(() => {
     socket.on('chat.message', (msg: IMessage) => {
@@ -37,11 +38,23 @@ export default function Room() {
     return () => {
       socket.off('chat.message')
     }
-  }, [socket])
+  }, [socket]) */
 
+  async function socketInitializer() {
+    await fetch('/api/socket')
+
+    socket = io('https://app-chat.herokuapp.com')
+
+    socket.on('chat.message', (msg: IMessage) => {
+      setMessages((currentMsg) => [...currentMsg, msg])
+    })
+  }
+
+  useEffect(() => {
+    socketInitializer()
+  }, [])
   async function sendMessage() {
     const sendAt = new Date()
-
     if (audioFile.blob) {
       const messageObject = {
         authorId: userId,
@@ -51,7 +64,6 @@ export default function Room() {
         fileName: audioFile.fileName,
         sendAt,
       } as IMessage
-
       socket.emit('chat.message', messageObject)
       setMessages((currentMsg) => [...currentMsg, messageObject])
       resetAudioFile()
@@ -70,12 +82,11 @@ export default function Room() {
 
       setMessage('')
       setFile({} as File)
-      socket.emit('createdMessage', messageObject)
+      socket.emit('chat.message', messageObject)
       setMessages((currentMsg) => [...currentMsg, messageObject])
 
       return
     }
-
     const messageObject = {
       authorId: userId,
       authorName: userName,
@@ -102,8 +113,8 @@ export default function Room() {
   }
 
   function renderMessages(message: IMessage) {
+    console.log(messages)
     const fileType = message.mimeType ? message.mimeType.split('/', 1)[0] : null
-
     if (fileType) {
       const blob = new Blob([message.body!], { type: message.mimeType })
 
