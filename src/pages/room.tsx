@@ -34,7 +34,9 @@ export default function Room() {
       setMessages((currentMsg) => [...currentMsg, msg])
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    return () => socket.off('chat.message')
+    return () => {
+      socket.off('chat.message')
+    }
   }, [socket])
 
   async function sendMessage() {
